@@ -1,0 +1,52 @@
+function flyjs_2(m)
+% 傅里叶级数可视化函数
+% 参数说明：
+%   m - 谐波次数上限（正整数）
+
+% ====== 参数初始化 ======
+dt = 0.01;          % 时间分辨率
+t = -3:dt:3;        % 时间向量（-3到3秒）
+E = 1;              % 信号幅度
+T = 1;              % 周期（秒）
+ta = T/2;           % 脉冲宽度
+w0 = 2*pi/T;        % 基波角频率
+
+% ====== 初始化求和变量 ======
+total_sum = E*ta/T; % 直流分量（n=0项）
+
+% ====== 傅里叶级数计算 ======
+for n = 1:m
+    % 修正项：使用元素运算符处理分母（避免矩阵维度问题）
+    sinc_term = sin(n*w0*ta/2)/(n*w0*ta/2); 
+    
+    % 计算傅里叶系数
+    fn = (2*E*ta/T) * sinc_term; 
+    
+    % 累加谐波分量
+    total_sum = total_sum + fn * cos(n*w0*t); 
+end
+
+% ====== 结果可视化 ======
+figure('Name','傅里叶级数近似','Color','white')
+plot(t, total_sum, 'LineWidth',1.5)
+title(sprintf('周期矩形信号的傅里叶级数近似（m=%d）',m))
+xlabel('时间 t (s)'), ylabel('幅度')
+grid on
+axis([-3 3 -0.2 1.2])
+set(gca, 'FontSize',10)
+
+% ====== 理论波形叠加 ======
+hold on
+% 绘制理论矩形波
+theoretical = E*(abs(mod(t,T)) < ta/2); 
+plot(t, theoretical, 'r--', 'LineWidth',1)
+legend('傅里叶近似', '理论波形')
+
+% ====== 错误修正说明 ======
+% 原第七行问题分析：
+% 错误语法：sin(w*ta*n/2)/(w*ta*n/2)
+% 正确形式应为：sin(n*w0*ta/2)/(n*w0*ta/2)
+% 修改内容：
+% 1. 运算优先级修正：添加必要括号
+% 2. 变量名优化：w -> w0 强调基波频率
+% 3. 元素运算符：确保标量运算
